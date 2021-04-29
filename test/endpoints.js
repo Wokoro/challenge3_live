@@ -87,7 +87,7 @@ test.serial.cb('target returned successful test', function (t) {
 
       t.is(res.statusCode, 200)
       t.is(res.body.status, 'success')
-      t.is(res.body.message, 'Target return successfuly')
+      t.is(res.body.message, 'Target return successfully')
 
       const target = res.body.data
       t.truthy(target.url)
@@ -147,7 +147,7 @@ test.serial.cb('target update successful test', function (t) {
 
       t.is(res.statusCode, 200)
       t.is(res.body.status, 'success')
-      t.is(res.body.message, 'Target updated succesfully')
+      t.is(res.body.message, 'Target updated successfully')
 
       const updatedTarget = res.body.data
       t.is(+updatedTarget.id, newTarget.id)
@@ -184,5 +184,64 @@ test.serial.cb('target update not found test', function (t) {
       t.is(res.body.message, 'Specified target not found')
       t.end()
     }).end(JSON.stringify(updateData))
+  }
+})
+
+test.serial.cb('url return test', function (t) {
+  var url = '/api/route'
+  var opts = { encoding: 'json', method: 'POST' }
+  var requestData = {
+    geoState: 'ca',
+    timestamp: '2018-07-19T05:28:59.513Z',
+    publisher: 'abc'
+  }
+  var targetData = {
+    value: 32,
+    url: 'http://target.com',
+    maximumAcceptPerDay: 5,
+    accept: { geoState: ['ca', 'ny'], hour: [1, 5] }
+  }
+
+  targetRepo.createTarget(targetData, urlReturnHelper)
+
+  function urlReturnHelper (err, data) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'URL returned successfully')
+      t.truthy(res.body.data.url)
+
+      t.end()
+    }).end(JSON.stringify(requestData))
+  }
+})
+
+test.serial.cb('url request error returned test', function (t) {
+  var url = '/api/route'
+  var opts = { encoding: 'json', method: 'POST' }
+  var requestData = {
+    geoState: 'ca',
+    timestamp: '2018-07-19T05:28:59.513Z',
+    publisher: 'abc'
+  }
+
+  targetRepo.deleteAll(urlReturnHelper)
+
+  function urlReturnHelper (err, data) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 403)
+      t.is(res.body.status, 'error')
+      t.is(res.body.message, 'Unable to return URL')
+
+      t.end()
+    }).end(JSON.stringify(requestData))
   }
 })

@@ -27,6 +27,7 @@
     "dotenv": "^8.2.0",
     "healthpoint": "^1.0.0",
     "http-hash-router": "^2.0.1",
+    "node-cron": "^3.0.0",
     "productionize": "^4.1.0",
     "redis": "^3.0.2",
     "req-logger": "^2.0.0",
