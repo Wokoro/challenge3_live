@@ -119,3 +119,70 @@ test.serial.cb('target not found test', function (t) {
     })
   })
 })
+
+test.serial.cb('target update successful test', function (t) {
+  var url = '/api/target'
+  var opts = { encoding: 'json', method: 'POST' }
+  var updateData = {
+    value: 22,
+    url: 'http://updatetarget.com',
+    maximumAcceptPerDay: 21,
+    geoState: ['ny'],
+    hour: [1, 4, 5]
+  }
+  var targetData = {
+    url: 'http://target.com',
+    value: 20,
+    maximumAcceptPerDay: 24,
+    accept: { geoState: ['ng', 'ny'], hour: [1, 5] }
+  }
+
+  targetRepo.createTarget(targetData, targetUpdateHelper)
+
+  function targetUpdateHelper (err, newTarget) {
+    t.falsy(err)
+
+    servertest(server(), `${url}/${newTarget.id}`, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'Target updated succesfully')
+
+      const updatedTarget = res.body.data
+      t.is(+updatedTarget.id, newTarget.id)
+      t.is(updatedTarget.value, updateData.value)
+      t.is(updatedTarget.maximumAcceptPerDay, updateData.maximumAcceptPerDay)
+      t.deepEqual(updatedTarget.accept, { geoState: updateData.geoState, hour: updateData.hour })
+
+      t.end()
+    }).end(JSON.stringify(updateData))
+  }
+})
+
+test.serial.cb('target update not found test', function (t) {
+  var url = '/api/target/1'
+  var opts = { encoding: 'json', method: 'POST' }
+  var updateData = {
+    value: 22,
+    url: 'http://updatetarget.com',
+    maximumAcceptPerDay: 21,
+    geoState: ['ny'],
+    hour: [1, 4, 5]
+  }
+
+  targetRepo.deleteAll(targetUpdateHelper)
+
+  function targetUpdateHelper (err, newTarget) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 404)
+      t.is(res.body.status, 'error')
+      t.is(res.body.message, 'Specified target not found')
+      t.end()
+    }).end(JSON.stringify(updateData))
+  }
+})
