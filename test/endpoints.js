@@ -4,6 +4,7 @@ var test = require('ava')
 var servertest = require('servertest')
 
 var server = require('../lib/server')
+var targetRepo = require('../lib/repositories/target')
 
 test.serial.cb('healthcheck', function (t) {
   var url = '/health'
@@ -30,4 +31,38 @@ test.serial.cb('target creation test', function (t) {
 
     t.end()
   }).end(JSON.stringify(payload))
+})
+
+test.serial.cb('targets return test', function (t) {
+  var url = '/api/targets'
+  var targetData = {
+    url: 'http://target1.com',
+    value: 20,
+    maximumAcceptPerDay: 20,
+    accept: { geoState: ['ng', 'ny'], hour: [4, 9] }
+  }
+  var opts = { encoding: 'json', method: 'GET' }
+
+  targetRepo.createTarget(targetData, (err, data) => {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'Targets returned successfully')
+
+      const targets = res.body.data
+      targets.forEach(target => {
+        t.truthy(target.url)
+        t.truthy(target.maximumAcceptPerDay)
+        t.truthy(target.value)
+        t.truthy(target.accept.geoState)
+        t.truthy(target.accept.hour)
+      })
+
+      t.end()
+    })
+  })
 })
