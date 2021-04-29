@@ -25,7 +25,7 @@ test.serial.cb('target creation test', function (t) {
   servertest(server(), url, opts, (err, res) => {
     t.falsy(err)
 
-    t.is(res.statusCode, 200)
+    t.is(res.statusCode, 201)
     t.is(res.body.status, 'success')
     t.is(res.body.message, 'Target created successfully')
 
@@ -61,6 +61,59 @@ test.serial.cb('targets return test', function (t) {
         t.truthy(target.accept.geoState)
         t.truthy(target.accept.hour)
       })
+
+      t.end()
+    })
+  })
+})
+
+test.serial.cb('target returned successful test', function (t) {
+  var url = '/api/target/1'
+  var opts = { encoding: 'json', method: 'GET' }
+  var targetData = {
+    url: 'http://target',
+    value: 20,
+    maximumAcceptPerDay: 30,
+    accept: { geoState: ['ng', 'pk'], hour: [3, 5] }
+  }
+
+  targetRepo.createTarget(targetData, targetReturnHelper)
+
+  function targetReturnHelper (err, data) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'Target return successfuly')
+
+      const target = res.body.data
+      t.truthy(target.url)
+      t.truthy(target.value)
+      t.truthy(target.maximumAcceptPerDay)
+      t.truthy(target.accept.geoState)
+      t.truthy(target.accept.hour)
+
+      t.end()
+    })
+  }
+})
+
+test.serial.cb('target not found test', function (t) {
+  var url = '/api/target/1'
+  var opts = { encoding: 'json', method: 'GET' }
+
+  targetRepo.deleteAll((err, data) => {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 404)
+      t.is(res.body.status, 'error')
+      t.is(res.body.message, 'Target specified not found')
 
       t.end()
     })
