@@ -15,3 +15,19 @@ test.serial.cb('healthcheck', function (t) {
     t.end()
   })
 })
+
+test.serial.cb('target creation test', function (t) {
+  var url = '/api/targets'
+  var payload = { url: 'http://sample.com', value: 20, maximumAcceptPerDay: 20, geoState: ['ca', 'ng'], hour: [2, 3] }
+  var opts = { encoding: 'json', method: 'POST' }
+
+  servertest(server(), url, opts, (err, res) => {
+    t.falsy(err)
+
+    t.is(res.statusCode, 200)
+    t.is(res.body.status, 'success')
+    t.is(res.body.message, 'Target created successfully')
+
+    t.end()
+  }).end(JSON.stringify(payload))
+})
