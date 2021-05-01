@@ -68,7 +68,7 @@ test.serial.cb('targets return test', function (t) {
 })
 
 test.serial.cb('target returned successful test', function (t) {
-  var url = '/api/target/1'
+  var url = '/api/target'
   var opts = { encoding: 'json', method: 'GET' }
   var targetData = {
     url: 'http://target',
@@ -82,7 +82,7 @@ test.serial.cb('target returned successful test', function (t) {
   function targetReturnHelper (err, data) {
     t.falsy(err)
 
-    servertest(server(), url, opts, (err, res) => {
+    servertest(server(), `${url}/${data.id}`, opts, (err, res) => {
       t.falsy(err)
 
       t.is(res.statusCode, 200)
@@ -102,7 +102,7 @@ test.serial.cb('target returned successful test', function (t) {
 })
 
 test.serial.cb('target not found test', function (t) {
-  var url = '/api/target/1'
+  var url = '/api/target/cko5s0a2n0004oojv2u9n4v4p'
   var opts = { encoding: 'json', method: 'GET' }
 
   targetRepo.deleteAll((err, data) => {
@@ -150,7 +150,7 @@ test.serial.cb('target update successful test', function (t) {
       t.is(res.body.message, 'Target updated successfully')
 
       const updatedTarget = res.body.data
-      t.is(+updatedTarget.id, newTarget.id)
+      t.is(updatedTarget.id, newTarget.id)
       t.is(updatedTarget.value, updateData.value)
       t.is(updatedTarget.maximumAcceptPerDay, updateData.maximumAcceptPerDay)
       t.deepEqual(updatedTarget.accept, { geoState: updateData.geoState, hour: updateData.hour })
@@ -161,7 +161,7 @@ test.serial.cb('target update successful test', function (t) {
 })
 
 test.serial.cb('target update not found test', function (t) {
-  var url = '/api/target/1'
+  var url = '/api/target/cko5s0a2n0004oojv2u9n4v4w'
   var opts = { encoding: 'json', method: 'POST' }
   var updateData = {
     value: 22,
