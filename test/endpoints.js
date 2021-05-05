@@ -19,7 +19,7 @@ test.serial.cb('healthcheck', function (t) {
 
 test.serial.cb('target creation test', function (t) {
   var url = '/api/targets'
-  var payload = { url: 'http://sample.com', value: 20, maximumAcceptPerDay: 20, geoState: ['ca', 'ng'], hour: [2, 3] }
+  var payload = { url: 'http://sample.com', value: 20, maximumAcceptPerDay: 20, accept: { geoState: ['ca', 'ng'], hour: [2, 3] } }
   var opts = { encoding: 'json', method: 'POST' }
 
   servertest(server(), url, opts, (err, res) => {
@@ -127,8 +127,10 @@ test.serial.cb('target update successful test', function (t) {
     value: 22,
     url: 'http://updatetarget.com',
     maximumAcceptPerDay: 21,
-    geoState: ['ny'],
-    hour: [1, 4, 5]
+    accept: {
+      geoState: ['ny'],
+      hour: [1, 4, 5]
+    }
   }
   var targetData = {
     url: 'http://target.com',
@@ -153,7 +155,7 @@ test.serial.cb('target update successful test', function (t) {
       t.is(updatedTarget.id, newTarget.id)
       t.is(updatedTarget.value, updateData.value)
       t.is(updatedTarget.maximumAcceptPerDay, updateData.maximumAcceptPerDay)
-      t.deepEqual(updatedTarget.accept, { geoState: updateData.geoState, hour: updateData.hour })
+      t.deepEqual(updatedTarget.accept, updateData.accept)
 
       t.end()
     }).end(JSON.stringify(updateData))
@@ -167,8 +169,10 @@ test.serial.cb('target update not found test', function (t) {
     value: 22,
     url: 'http://updatetarget.com',
     maximumAcceptPerDay: 21,
-    geoState: ['ny'],
-    hour: [1, 4, 5]
+    accept: {
+      geoState: ['ny'],
+      hour: [1, 4, 5]
+    }
   }
 
   targetRepo.deleteAll(targetUpdateHelper)
@@ -187,7 +191,7 @@ test.serial.cb('target update not found test', function (t) {
   }
 })
 
-test.serial.cb('url return test', function (t) {
+test.serial.cb('url return test 1', function (t) {
   var url = '/api/route'
   var opts = { encoding: 'json', method: 'POST' }
   var requestData = {
@@ -197,12 +201,20 @@ test.serial.cb('url return test', function (t) {
   }
   var targetData = {
     value: 32,
-    url: 'http://target.com',
+    url: 'http://custom1.com',
     maximumAcceptPerDay: 5,
     accept: { geoState: ['ca', 'ny'], hour: [1, 5] }
   }
 
-  targetRepo.createTarget(targetData, urlReturnHelper)
+  targetRepo.deleteAll(() => {
+    targetRepo.createTarget(targetData, targetPopulate)
+  })
+
+  function targetPopulate (err, data) {
+    if (err) t.falsy(err)
+
+    targetRepo.createTarget({ ...targetData, value: 40, url: 'http://custom1a.com' }, urlReturnHelper)
+  }
 
   function urlReturnHelper (err, data) {
     t.falsy(err)
@@ -213,7 +225,89 @@ test.serial.cb('url return test', function (t) {
       t.is(res.statusCode, 200)
       t.is(res.body.status, 'success')
       t.is(res.body.message, 'URL returned successfully')
-      t.truthy(res.body.data.url)
+      t.is(res.body.data.url, 'http://custom1a.com')
+
+      t.end()
+    }).end(JSON.stringify(requestData))
+  }
+})
+
+test.serial.cb('url return test 2', function (t) {
+  var url = '/api/route'
+  var opts = { encoding: 'json', method: 'POST' }
+  var requestData = {
+    team: 5,
+    country: 'ng',
+    publisher: 'abc'
+  }
+  var targetData = {
+    value: 32,
+    url: 'http://custom2.com',
+    maximumAcceptPerDay: 5,
+    accept: { team: [3, 5, 2], country: ['ng', 'ny'] }
+  }
+
+  targetRepo.deleteAll(() => {
+    targetRepo.createTarget(targetData, targetPopulate)
+  })
+
+  function targetPopulate (err, data) {
+    if (err) t.falsy(err)
+
+    targetRepo.createTarget({ ...targetData, value: 40, url: 'http://custom2a.com' }, urlReturnHelper)
+  }
+
+  function urlReturnHelper (err, data) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'URL returned successfully')
+      t.is(res.body.data.url, 'http://custom2a.com')
+
+      t.end()
+    }).end(JSON.stringify(requestData))
+  }
+})
+
+test.serial.cb('url return test 3', function (t) {
+  var url = '/api/route'
+  var opts = { encoding: 'json', method: 'POST' }
+  var requestData = {
+    lang: 'fr',
+    timestamp: '2018-07-19T04:28:59.513Z',
+    publisher: 'abc'
+  }
+  var targetData = {
+    value: 32,
+    url: 'http://custom3.com',
+    maximumAcceptPerDay: 5,
+    accept: { lang: ['en', 'fr'], hour: [1, 3, 4] }
+  }
+
+  targetRepo.deleteAll(() => {
+    targetRepo.createTarget(targetData, targetPopulate)
+  })
+
+  function targetPopulate (err, data) {
+    if (err) t.falsy(err)
+
+    targetRepo.createTarget({ ...targetData, value: 40, url: 'http://custom3a.com' }, urlReturnHelper)
+  }
+
+  function urlReturnHelper (err, data) {
+    t.falsy(err)
+
+    servertest(server(), url, opts, (err, res) => {
+      t.falsy(err)
+
+      t.is(res.statusCode, 200)
+      t.is(res.body.status, 'success')
+      t.is(res.body.message, 'URL returned successfully')
+      t.is(res.body.data.url, 'http://custom3a.com')
 
       t.end()
     }).end(JSON.stringify(requestData))
